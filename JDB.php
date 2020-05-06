@@ -3,25 +3,41 @@
     namespace JDB\sys\database;
     
     class Database {
-        //add folder to upload, example /var/www/html/database/
-        var $upload = '';
-        //add folder to upload, example https://yourwebsite.com/database/
-        var $download = '';
-        
+        //INSERT PATH HERE
+        var $upload = 'PATH_SAVE/database/';
+        var $password = '';
+        function __construct($password = null){
+            if($password != null){
+                if(!file_exists($this->upload)){
+                    mkdir($this->upload);
+                }
+            }else{
+                echo 'Need login with password';
+            }
+        }
         public function make_table($table, $index, $values){
-            $value_list = $this->anti_crash_get($this->download.$table.'/'.$index.'.json');
-            if(strlen($value_list) == 0){
-                $this->anti_crash_put($this->upload.$table.'/'.$index.'.json', json_encode($values, JSON_PRETTY_PRINT));
+            if(!file_exists($this->upload.$table)){
+                mkdir($this->upload.$table);
+            }
+            $value_list = $this->anti_crash_get($this->upload.$table.'/'.$index.'.jdb');
+            if(strlen($value_list) == 0 & strlen($index) > 0 & strlen($table) > 0){
+                $this->anti_crash_put($this->upload.$table.'/'.$index.'.jdb', json_encode($values, JSON_PRETTY_PRINT));
                 return true;
             }else{
                 return false;
             }
         }
         public function drop_table($table, $index){
-            return @unlink($this->upload.$table.'/'.$index.'.json');
+            return @unlink($this->upload.$table.'/'.$index.'.jdb');
+        }
+        public function drop_index($table, $index){
+            return @unlink($this->upload.$table.'/index/'.$index.'.index');
         }
         public function make_index($table, $index_of, $index){
-            $value_list = $this->anti_crash_get($this->download.$table.'/index/'.$index_of.'.index');
+            if(!file_exists($this->upload.$table.'/index/')){
+                mkdir($this->upload.$table.'/index/');
+            }
+            $value_list = $this->anti_crash_get($this->upload.$table.'/index/'.$index_of.'.index');
             if(strlen($value_list) == 0){
                 $this->anti_crash_put($this->upload.$table.'/index/'.$index_of.'.index', $index);
                 return true;
@@ -30,53 +46,81 @@
             }
         }
         public function set_value($table, $index, $key, $values){
-            $test_index = $this->anti_crash_get($this->download.$table.'/index/'.$index.'.index');
+            $test_index = $this->anti_crash_get($this->upload.$table.'/index/'.$index.'.index');
             $index = strlen($test_index) > 0 ? $test_index:$index;
-            $value_list = $this->anti_crash_get($this->download.$table.'/'.$index.'.json');
+            $value_list = $this->anti_crash_get($this->upload.$table.'/'.$index.'.jdb');
             if(strlen($value_list) > 0){
                 $value_list = json_decode($value_list, true);
                 $value_list[$key] = $values;
-                $this->anti_crash_put($this->upload.$table.'/'.$index.'.json', json_encode($value_list, JSON_PRETTY_PRINT));
+                $this->anti_crash_put($this->upload.$table.'/'.$index.'.jdb', json_encode($value_list, JSON_PRETTY_PRINT));
                 return true;
             }else{
                 return false;
             }
         }
         public function get_values($table, $index){
-            $test_index = $this->anti_crash_get($this->download.$table.'/index/'.$index.'.index');
+            $test_index = $this->anti_crash_get($this->upload.$table.'/index/'.$index.'.index');
             $index = strlen($test_index) > 0 ? $test_index:$index;
-            return json_decode($this->anti_crash_get($this->download.$table.'/'.$index.'.json'), true);
+            return json_decode($this->anti_crash_get($this->upload.$table.'/'.$index.'.jdb'), true);
         }
-        public function anti_crash_get($path, $state = 50) {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $path);
-            curl_setopt($ch, CURLOPT_AUTOREFERER, true);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-            $result_test = $response != false;
-            if(($state == 0 && $result_test == false && strlen($response) > 0)||$httpCode == '404'||$httpCode == '301'){
+        public function anti_crash_get($path, $state = 500) {
+            $fh = @fopen($path, 'r');
+            if($state > 0){
+                if($fh != false){
+                    if(flock($fh, LOCK_EX)) {
+                        $size_of_file = filesize($path);
+                        $lines = '';
+                        while(!feof($fh)) {
+                            $lines.= trim(fgets($fh))."\n";
+                        }
+                        $lines = substr($lines, 0, strlen($lines)-1);
+                        flock($fh, LOCK_UN);
+                        fclose($fh);
+                        $return_data = $this->decrypt($lines, $this->password);
+                        if(strlen($return_data) == 0 && @count(json_decode($return_data, true)) == 0){
+                            usleep(200*1000);
+                            return $this->anti_crash_get($path, $state - 1);
+                        }else{
+                            return $return_data;
+                        }
+                    }else{
+                        fclose($fh);
+                        usleep(200*1000);
+                        return $this->anti_crash_get($path, $state - 1);
+                    }
+                }else{
+                    return '';
+                }
+            }else{
                 return '';
-            }else if($state > 0 && $result_test == false && strlen($response) > 0){
-                return $this->anti_crash_get($path, $state - 1);
-            }else{
-                return $response;
             }
         }
-        public function anti_crash_put($path, $values, $state = 50) {
-            if($this->get_time_edited($path) == time()){
-                usleep(500*1000);
-            }
-            $test1 = $this->anti_crash_get(str_replace($this->upload, $this->download, $path));
-            $edited = file_put_contents($path, $values);
-            $test2 = $this->anti_crash_get(str_replace($this->upload, $this->download, $path));
-            if($state == 0 && $test1 == $test2){
-                return false;
-            }else if($state > 0 && $test1 == $test2){
-                return $this->anti_crash_put($path, $values, $state - 1);
+        public function anti_crash_put($path, $values, $state = 500) {
+            $fh = fopen($path, 'w');
+            $start_time = microtime(true);
+            if($state > 0){
+                if($fh != null){
+                    if(flock($fh, LOCK_EX)){
+                        $end_time = microtime(true);
+                        fwrite($fh, $this->encrypt($values, $this->password));
+                        flock($fh, LOCK_UN);
+                        fclose($fh);
+                        return true;
+                    }else{
+                        fclose($fh);
+                        usleep(200*1000);
+                        return $this->anti_crash_put($path, $values, $state - 1);
+                    }
+                }else{
+                    $fh = fopen($path, 'w');
+                    fwrite($fh, $values);
+                    fclose($fh);
+                    @$ms_ping = round((($end_time - $start_time)*1000));
+                    return true;
+                }
             }else{
-                return true;
+                fclose($fh);
+                return false;
             }
         }
         public function get_time_edited($file){
@@ -95,5 +139,13 @@
             }
             return $list_table;
         }
+        function encrypt($pure_string, $encryption_key) {
+            $encrypted_string=openssl_encrypt($pure_string,"AES-128-ECB",$encryption_key);
+            return $encrypted_string;
+        }
+        function decrypt($encrypted_string, $encryption_key) {
+            return openssl_decrypt($encrypted_string,"AES-128-ECB",$encryption_key);
+        }
     }
+?>
 ?>
