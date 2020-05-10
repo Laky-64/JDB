@@ -1,0 +1,13 @@
+{
+    "name": "root/jdb",
+    "description": "A simple database based on json text plain",
+    "type": "project",
+    "authors": [
+        {
+            "name": "laky64",
+            "email": "iraci.matteo@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
