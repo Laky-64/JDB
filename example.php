@@ -1,6 +1,6 @@
 <?php
     header('Content-Type: text/plain');
-    include('JDB.php');
+    require_once('vendor/autoload.php');
     //1234 is password for example and you can change
     $DB_CLASS = new \JDB\sys\database\Database('1234');
     
