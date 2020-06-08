@@ -2,7 +2,7 @@
     header('Content-Type: text/plain');
     require_once('vendor/autoload.php');
     //1234 is password for example and you can change
-    $DB_CLASS = new \JDB\sys\database\Database('1234');
+    $DB_CLASS = new \JDB\sys\database\Database('1234', 'TEST');
     
     //Make Table return false if already exist, you need to add default value in Array format
     $DB_CLASS->make_table('TABLE_NAME', 'ROW_NAME', ['VAL1' => '12345', 'VAL2' => ['12345', '67890']]);
