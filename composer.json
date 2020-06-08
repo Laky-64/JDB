@@ -9,5 +9,8 @@
         }
     ],
     "minimum-stability": "stable",
-    "require": {}
+    "require": {
+        "ext-json": "*",
+        "ext-openssl": "*"
+    }
 }
