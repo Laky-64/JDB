@@ -4,12 +4,17 @@
     
     class Database {
         //INSERT PATH HERE
-        var $upload = 'PATH_SAVE/database/';
+        var $upload = '';
         var $password = '';
-        function __construct($password = null){
+        function __construct($password = null, $database_location = null){
             if($password != null){
-                if(!file_exists($this->upload)){
-                    mkdir($this->upload);
+                if($database_location != null){
+                    $this -> $upload = $database_location . '/database/';
+                    if(!file_exists($this->upload)){
+                        mkdir($this->upload);
+                    }
+                }else{
+                    echo 'Need folder to specifty where save Database with www-data permission';
                 }
             }else{
                 echo 'Need login with password';
