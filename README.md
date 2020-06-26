@@ -1,7 +1,7 @@
 # JDB(v. 2.0)
 A simple database based on json text plain
 
-###Now Available in Async!
+### Now Available in Async!
 
 First create the database folder, then create in the database folder with the name of the table to which you want to attribute, in which you want to insert the fields
 
