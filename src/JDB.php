@@ -23,7 +23,6 @@ class JDB {
      * @throws Exception
      */
     function __construct($password = null, $database_location = null, $timeout_seconds = 1, $async = false){
-        include 'lib/vendor/autoload.php';
         $this -> init_async = $async;
         if($async){
             Loop::delay(0, function () use ($password, $database_location, $timeout_seconds) {

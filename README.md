@@ -1,4 +1,4 @@
-# JDB(v. 2.0-stable)
+# JDB(v. 2.2-stable)
 A simple database based on json text plain
 
 ### Now Available in Async!
