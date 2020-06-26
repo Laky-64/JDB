@@ -78,7 +78,7 @@ class JDB {
                 $this->anti_crash_put($this->upload.$table.'/'.$index.'.jdb', json_encode($values, JSON_PRETTY_PRINT), $this -> timeout);
                 $defer -> resolve(['result' => $this -> str_to_bool(true), 'message' => 'Maked Correctly Table and Row in Async Mode!']);
             }else{
-                $defer -> resolve(['result' => $this -> str_to_bool(false), 'message' => 'Already Exist this Table and Row']);
+                $defer -> fail(new Exception('Already Exist this Table and Row'));
             }
         });
         $promises = $defer->promise();
@@ -86,7 +86,7 @@ class JDB {
             if (!$error) {
                 $callback($result);
             }else{
-                throw new Exception('Error on executing AMPPHP Async');
+                throw $error;
             }
         });
     }
@@ -110,7 +110,7 @@ class JDB {
                 $this->anti_crash_put($this->upload.$table.'/'.$index.'.jdb', json_encode($values, JSON_PRETTY_PRINT), $this -> timeout);
                 return ['result' => $this -> str_to_bool(true), 'message' => 'Maked Correctly Table and Row'];
             }else{
-                return ['result' => $this -> str_to_bool(false), 'message' => 'Already Exist this Table and Row'];
+                throw new Exception('Already Exist this Table and Row');
             }
         }else{
             throw new Exception( 'JDB is maked in async and can\'t return in sequential mode!');
@@ -217,24 +217,24 @@ class JDB {
      * Make Alternative Index.
      * Async Function
      * @param string $table Table Name
-     * @param string $index_of Row Name
-     * @param string $index Alternative Row Name
+     * @param string $index Row Name
+     * @param string $new_index Alternative Row Name
      * @param callable $callback Async return result of "make_index"
      * @throws Exception
      */
-    public function make_alternative_index_async($table, $index_of, $index, $callback) {
+    public function make_alternative_index_async($table, $index, $new_index, $callback) {
         $defer = new Deferred;
-        Loop::delay(0, function () use ($defer, $table, $index_of, $index) {
-            if(file_exists($this->upload.$table.'/'.$index_of)){
+        Loop::delay(0, function () use ($defer, $table, $new_index, $index) {
+            if(file_exists($this->upload.$table.'/'.$index.'.jdb')){
                 if(!file_exists($this->upload.$table.'/index/')){
                     mkdir($this->upload.$table.'/index/');
                 }
-                $value_list = $this->anti_crash_get($this->upload.$table.'/index/'.$index_of.'.index', $this -> timeout);
+                $value_list = $this->anti_crash_get($this->upload.$table.'/index/'.$new_index.'.index', $this -> timeout);
                 if(strlen($value_list) == 0){
-                    $this->anti_crash_put($this->upload.$table.'/index/'.$index_of.'.index', $index, $this -> timeout);
+                    $this->anti_crash_put($this->upload.$table.'/index/'.$new_index.'.index', $index, $this -> timeout);
                     $defer -> resolve(['result' => $this -> str_to_bool(true), 'message' => 'Maked correctly alternative index']);
                 }else{
-                    $defer -> fail(new Exception( 'Error when creating alternative index "' . $index_of. '"'));
+                    $defer -> fail(new Exception( 'Alternative index "' . $new_index. '" already exist'));
                 }
             }else{
                 $defer -> fail(new Exception( 'Not found row or table'));
@@ -256,23 +256,23 @@ class JDB {
      * Make Alternative Index.
      * Sequential Function
      * @param string $table Table Name
-     * @param string $index_of Row Name
+     * @param string $index Row Name
      * @param string $new_index Alternative Row Name
      * @return array Result of "make_index"
      * @throws Exception
      */
-    public function make_alternative_index($table, $index_of, $new_index) {
+    public function make_alternative_index($table, $index, $new_index) {
         if(!$this -> init_async){
-            if(file_exists($this->upload.$table.'/'.$index_of)){
+            if(file_exists($this->upload.$table.'/'.$index.'.jdb')){
                 if(!file_exists($this->upload.$table.'/index/')){
                     mkdir($this->upload.$table.'/index/');
                 }
-                $value_list = $this->anti_crash_get($this->upload.$table.'/index/'.$index_of.'.index', $this -> timeout);
+                $value_list = $this->anti_crash_get($this->upload.$table.'/index/'.$new_index.'.index', $this -> timeout);
                 if(strlen($value_list) == 0){
-                    $this->anti_crash_put($this->upload.$table.'/index/'.$index_of.'.index', $new_index, $this -> timeout);
+                    $this->anti_crash_put($this->upload.$table.'/index/'.$new_index.'.index', $index, $this -> timeout);
                     return ['result' => $this -> str_to_bool(true), 'message' => 'Maked correctly alternative index'];
                 }else{
-                    return ['result' => $this -> str_to_bool(false), 'message' => 'Not found row "' . $index_of. '"'];
+                    throw new Exception('Alternative index "' . $new_index. '" already exist');
                 }
             }else{
                 throw new Exception( 'Not found row or table');
@@ -290,7 +290,7 @@ class JDB {
      * @param string $table Table Name
      * @param string $index Row Name
      * @param string $key Column Name
-     * @param string $values Value of Column
+     * @param string|array $values Value of Column
      * @param callable $callback Async return result of "set_value"
      * @throws Exception
      */
@@ -325,7 +325,7 @@ class JDB {
      * @param string $table Table Name
      * @param string $index Row Name
      * @param string $key Column Name
-     * @param string $values Value of Column
+     * @param string|array $values Value of Column
      * @return array Result of "set_value"
      * @throws Exception
      */
@@ -362,7 +362,7 @@ class JDB {
         Loop::delay(0, function () use ($defer, $table, $index) {
             $test_index = $this->anti_crash_get($this->upload.$table.'/index/'.$index.'.index', $this -> timeout);
             $index = strlen($test_index) > 0 ? $test_index:$index;
-            $return_get = @$this->anti_crash_get($this->upload.$table.'/'.$index.'.jdb', $this -> timeout);
+            $return_get = $this->anti_crash_get($this->upload.$table.'/'.$index.'.jdb', $this -> timeout);
             if($return_get){
                 $defer -> resolve(json_decode($return_get, true));
             }else{
@@ -436,7 +436,7 @@ class JDB {
             }
         });
     }
-    
+
     /**
      * Get Auto increment index of Row.
      * Sequential Function
@@ -536,7 +536,7 @@ class JDB {
         $defer = new Deferred;
         Loop::delay(0, function () use ($defer, $table) {
             if(file_exists($this->upload.$table.'/index')){
-                $dir_list = scandir($this->upload.$table);
+                $dir_list = scandir($this->upload.$table.'/index');
                 $list_table = [];
                 foreach($dir_list as $table){
                     if($table != ".." && $table != "."){
@@ -567,7 +567,7 @@ class JDB {
      */
     public function get_rows_alternative_name($table) {
         if(!$this -> init_async){
-            if(file_exists($this->upload.$table)){
+            if(file_exists($this->upload.$table.'/index')){
                 $dir_list = scandir($this->upload.$table.'/index');
                 $list_table = [];
                 foreach($dir_list as $table){
