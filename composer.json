@@ -12,6 +12,7 @@
     },
     "description": "A simple database based on json text plain",
     "license": "MIT",
+    "minimum-stability": "stable",
     "name": "laky64/jdb",
     "require": {
         "php": ">=7.4",
