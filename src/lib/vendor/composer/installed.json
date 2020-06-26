@@ -1,0 +1,82 @@
+[
+    {
+        "name": "amphp/amp",
+        "version": "v2.4.4",
+        "version_normalized": "2.4.4.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/amphp/amp.git",
+            "reference": "1e58d53e4af390efc7813e36cd215bd82cba4b06"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/amphp/amp/zipball/1e58d53e4af390efc7813e36cd215bd82cba4b06",
+            "reference": "1e58d53e4af390efc7813e36cd215bd82cba4b06",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=7"
+        },
+        "require-dev": {
+            "amphp/php-cs-fixer-config": "dev-master",
+            "amphp/phpunit-util": "^1",
+            "ext-json": "*",
+            "jetbrains/phpstorm-stubs": "^2019.3",
+            "phpunit/phpunit": "^6.0.9 | ^7",
+            "react/promise": "^2",
+            "vimeo/psalm": "^3.11@dev"
+        },
+        "time": "2020-04-30T04:54:50+00:00",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "2.x-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Amp\\": "lib"
+            },
+            "files": [
+                "lib/functions.php",
+                "lib/Internal/functions.php"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Daniel Lowrey",
+                "email": "rdlowrey@php.net"
+            },
+            {
+                "name": "Aaron Piotrowski",
+                "email": "aaron@trowski.com"
+            },
+            {
+                "name": "Bob Weinand",
+                "email": "bobwei9@hotmail.com"
+            },
+            {
+                "name": "Niklas Keller",
+                "email": "me@kelunik.com"
+            }
+        ],
+        "description": "A non-blocking concurrency framework for PHP applications.",
+        "homepage": "http://amphp.org/amp",
+        "keywords": [
+            "async",
+            "asynchronous",
+            "awaitable",
+            "concurrency",
+            "event",
+            "event-loop",
+            "future",
+            "non-blocking",
+            "promise"
+        ]
+    }
+]

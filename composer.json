@@ -1,16 +1,23 @@
 {
-    "name": "laky64/jdb",
-    "description": "A simple database based on json text plain",
-    "type": "project",
     "authors": [
         {
             "name": "laky64",
             "email": "iraci.matteo@gmail.com"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "laky64\\database": "src/"
+        }
+    },
+    "description": "A simple database based on json text plain",
+    "license": "MIT",
     "minimum-stability": "stable",
+    "name": "laky64/jdb",
     "require": {
+        "php": ">=7.4",
         "ext-json": "*",
         "ext-openssl": "*"
-    }
+    },
+    "type": "project"
 }
