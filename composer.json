@@ -20,5 +20,6 @@
         "ext-openssl": "*",
         "amphp/amp": "^2.4"
     },
-    "type": "project"
+    "type": "project",
+    "version": "2.0"
 }
