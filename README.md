@@ -1,7 +1,9 @@
-# JDB(v. 2.3-stable)
-A simple database based on json text plain
+# JDB(v. 3.0-beta)
+A very fast database based on json text plain with encryptation
 
-### Now Available in Async!
+`JDB 2.3-stable it's still available but deprecated`
+
+### Now Available in Async Multi-Thread and Windows Environment!
 
 First create the database folder, then create in the database folder with the name of the table to which you want to attribute, in which you want to insert the fields
 
@@ -19,202 +21,161 @@ With **json file** (`Composer`):
 ```
 With **command line** (`Composer`):
 
-➖ `composer require laky64/jdb`
+**-** `composer require laky64/jdb`
 
 ## Documentation
 Read this **documentation** carefully so as not to cause malfunctions with **JDB**
 
-### Getting Started
-To start you must specify the **folder** in which to save the files, for example `/var/www/html`, specifying the **password** for the database
+### JDB CORE
 
+#### Requirements:
+- **PHP > 7.4**
+- **PHP OpenSSL**
+- **PHP Memcache**
+- **Memcached Server**
+- **AmpPHP**
+
+
+#### Type of Threads Available
+- **Two Thread**
+1 I/O Thread, 1 Controller Unit and 2 Operation Thread (Very fast but not optimized for multiple connections)
+- **Four Thread**
+1 I/O Thread, 1 Controller Unit and 4 Operation Thread (Fast and optimized for mid level of multiple connections)
+- **Eight Thread**
+1 I/O Thread, 1 Controller Unit and 8 Operation Thread (Slow but optimized for high level of multiple connections)
+- **Twelve Thread**
+1 I/O Thread, 1 Controller Unit and 12 Operation Thread (Very slow but optimized for very high level of multiple connections)
+
+#### Make runner for local JDB Server
+First you need to run a **Memcached Server** without **stopping**, then create a php file to run the **JDB Core** without **stopping** _(Suggested one for server)_
 ``` php
-require_once 'vendor/autoload.php';
-use laky64\database\JDB;
-$DB_CLASS = new JDB(PASSWORD(string), FOLDER(string), TIMEOUT(int), false);
+header('Content-Type: text/plain'); //For make readable JDBC Core results
+ini_set('memory_limit', '2048M'); //For avoid a memory overload
+use laky64\database\JDB_CORE;
+include 'vendor/autoload.php';
+new JDB_CORE(THREAD_INSTANCE(JDB_CORE::NUM_THREAD), DATABASE_FOLDER(String), IP_MEMCACHED_SERVER(String), PORT_MEMCACHED_SERVER(String));
 ```
 
-or async (Required AMP-PHP)
+### JDBI Client
+Front-end to take request to JDB Core
 
+#### Requirements:
+- **PHP > 7.4**
+- **PHP Memcache**
+- **JDB Core Running**
+- **Memcached Server Running**
+
+#### Introduction
+For first initialize the **JDB Sock Connection** to **Memcached Server**
 ``` php
-require_once 'vendor/autoload.php';
-use laky64\database\JDB;
-use Amp\Loop;
-@Loop::run(function (){
-    ...
-    Your code Here
-    ...
-    $DB_CLASS = new JDB(PASSWORD(string), FOLDER(string), TIMEOUT(int), true);
-});
+use laky64\database\JDBI;
+include 'vendor/autoload.php';
+$JDBI = new JDBI(IP_MEMCACHED_SERVER(String), PORT_MEMCACHED_SERVER(String)); //Start Connection
+...
+$JDBI -> close(); //Close connection
 ```
-
-
-### Making Table
-Make Table return false if already exist, you need to add default value in **Array** format
+#### Show Processlist
+Show processlist, return array on success and null on failure
 ``` php
 ...
-$DB_CLASS->make_row(TABLE_NAME(string), ROW_NAME(string), VALUES(array));
+$JDBI->query('SHOW PROCESSLIST;');
+...
 ```
-
-or async (Required AMP-PHP)
-
+#### Make Database
+For make database, return true on success and false on failure
 ``` php
 ...
-@Loop::run(function (){
-    ...
-    $DB_CLASS->make_row_async(TABLE_NAME(string), ROW_NAME(string), VALUES(array), function ($result){
-        ...
-    });
-});
+$JDBI->query('CREATE DATABASE `database_name` PASSWORD `database_password`;');
+...
 ```
-
-### Make Alternative Index
-Make **alternative** index row name's, you need set {TABLE NAME, NEW NAME, OLD NAME}
+#### Drop Database
+For drop database, return true on success and false on failure
 ``` php
 ...
-$DB_CLASS->make_alternative_index(TABLE_NAME(string), NEW_ROW_NAME(string), ROW_NAME(string));
+$JDBI->query('DROP DATABASE `database_name`;');
+...
 ```
-
-or async (Required AMP-PHP)
-
+#### Connect to Database
+For connect to database, return true on success and false on failure
 ``` php
 ...
-@Loop::run(function (){
-    ...
-    $DB_CLASS->make_alternative_index_async(TABLE_NAME(string), NEW_ROW_NAME(string), ROW_NAME(string), function ($result){
-        ...
-    });
-});
+$JDBI -> connect('database_name','database_password');
+...
 ```
-
-### Reading Row
-You can read from **alternative** index if setted or from **default** index, this return Array
+#### Make Table
+For make table **(Need connection to database)**, return true on success and false on failure
+##### With Auto-Increment primary key
 ``` php
 ...
-$DB_CLASS->get_values(TABLE_NAME(string), ROW_NAME(string));
+$JDBI->query('CREATE TABLE `table_name` (`column1`, `column2`, `column3`) AS PRIMARY `column1` TYPE `AUTO_INCREMENT`;');
+...
 ```
-
-or async (Required AMP-PHP)
-
+##### With Defined primary key
 ``` php
 ...
-@Loop::run(function (){
-    ...
-    $DB_CLASS->get_values_async(TABLE_NAME(string), ROW_NAME(string), function ($result){
-        ...
-    });
-});
+$JDBI->query('CREATE TABLE `table_name` (`column1`, `column2`, `column3`) AS PRIMARY `column1` TYPE `DEFINED`;');
+...
 ```
-
-### Writing Value
-You can write value from **alternative** index if setted or from **default** index, this return Boolean
+#### Drop Table
+For drop table **(Need connection to database)**, return true on success and false on failure
 ``` php
 ...
-$DB_CLASS->set_value(TABLE_NAME(string), ROW_NAME(string), COLUMN_NAME(string), VALUE(string or array));
+$JDBI->query('DROP TABLE `table_name`;');
+...
 ```
-
-or async (Required AMP-PHP)
-
+#### Show all Table
+Show all tables **(Need connection to database)**, return array on success and null on failure
 ``` php
 ...
-@Loop::run(function (){
-    ...
-    $DB_CLASS->set_value_async(TABLE_NAME(string), ROW_NAME(string), COLUMN_NAME(string), VALUE(string or array), function ($result){
-        ...
-    });
-});
+$JDBI->query('SHOW TABLES;');
+...
 ```
-
-### Drop Row
-For **delete row**, return true if is deleted
+#### Dump Table
+Dump Row **(Need connection to database)**, return array on success and null on failure
 ``` php
 ...
-$DB_CLASS->drop_row(TABLE_NAME(string), ROW_NAME(string));
+$JDBI->query('SELECT * FROM `table_name`;');
+...
 ```
-
-or async (Required AMP-PHP)
-
+#### Add Column
+Add Column **(Need connection to database)**, return true on success and false on failure
 ``` php
 ...
-@Loop::run(function (){
-    ...
-    $DB_CLASS->drop_row_async(TABLE_NAME(string), ROW_NAME(string), function ($result){
-        ...
-    });
-});
+$JDBI->query('ALTER TABLE `table_name` ADD COLUMN (`column1`, `column2`);');
+...
 ```
-
-### Drop Alternative Index
-For **delete index**, return true if is deleted
+#### Drop Column
+Add Column **(Need connection to database)**, return true on success and false on failure
 ``` php
 ...
-$DB_CLASS->drop_index(TABLE_NAME(string), ALTERNATIVE_INDEX_NAME(string));
+$JDBI->query('ALTER TABLE `table_name` DROP COLUMN (`column1`, `column2`);');
+...
 ```
-
-or async (Required AMP-PHP)
-
+#### Insert Row
+Insert Row **(Need connection to database)**, return true on success and false on failure
 ``` php
 ...
-@Loop::run(function (){
-    ...
-    $DB_CLASS->drop_index_async(TABLE_NAME(string), ALTERNATIVE_INDEX_NAME(string), function ($result){
-        ...
-    });
-});
+$JDBI->query('INSERT INTO `table_name` (`column1`, `column2`, `column3`) VALUES (`value1`, `value2`, `value3`);');
+...
 ```
-
-### Getting Auto-increment index
-This is for **getting auto-increment**(Based on row numbers), this return int
+#### Update Row
+Insert Row **(Need connection to database)**, return true on success and false on failure
 ``` php
 ...
-$DB_CLASS->get_auto_increment(TABLE_NAME);
+$JDBI->query('UPDATE `table_name` SET (`column1`, `column2`) VALUES (`value1`, `value2`) WHERE `column` IS `value`;');
+...
 ```
-
-or async (Required AMP-PHP)
-
+#### Delete Row
+Delete Row **(Need connection to database)**, return true on success and false on failure
 ``` php
 ...
-@Loop::run(function (){
-    ...
-    $DB_CLASS->get_auto_increment_async(TABLE_NAME(string), function ($result){
-        ...
-    });
-});
+$JDBI->query('DELETE FROM `table_name` WHERE `column` IS `value`;');
+...
 ```
-
-### Getting all row name from table
-This function return **all row name** as **array**
+#### Dump Row
+Dump Row **(Need connection to database)**, return array on success and null on failure
 ``` php
 ...
-$DB_CLASS->get_rows_name(TABLE_NAME(string));
-```
-
-or async (Required AMP-PHP)
-
-``` php
+$JDBI->query('SELECT * FROM `table_name` WHERE `column` IS `value`;');
 ...
-@Loop::run(function (){
-    ...
-    $DB_CLASS->get_rows_name_async(TABLE_NAME(string), function ($result){
-        ...
-    });
-});
-```
-
-### Getting all alternative row name from table
-This function return **all row name** as **array**
-``` php
-...
-$DB_CLASS->get_rows_alternative_name(TABLE_NAME(string));
-```
-
-or async (Required AMP-PHP)
-
-``` php
-...
-@Loop::run(function (){
-    ...
-    $DB_CLASS->get_rows_alternative_name_async(TABLE_NAME(string), function ($result){
-        ...
-    });
-});
 ```

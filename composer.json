@@ -18,7 +18,9 @@
         "php": ">=7.4",
         "ext-json": "*",
         "ext-openssl": "*",
-        "amphp/amp": "^2.4"
+        "amphp/amp": "^2.4",
+        "amphp/file": "^1.0.0",
+        "ext-memcache": "*"
     },
     "type": "project"
 }
