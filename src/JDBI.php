@@ -3,27 +3,27 @@ namespace laky64\database;
 
 use Exception;
 
-include 'CustomMemcache.php';
-
 class JDBI {
     protected CustomMemcache $INSTANCE_RAM;
     protected string $DB_NAME;
     protected string $DB_PASSWORD;
     protected bool $IS_CONNECTED = false;
     protected int $TIMEOUT = 4;
+
     /**
      * JDBI constructor.
      * Create instance to local TCP/UDP server using Sockets.
      * @param string $MEM_CACHE_IP Memcached Server IP [optional].
      * @param string $MEM_CACHE_PORT Memcached Server Port [optional].
      * @param int $TIMEOUT Max retry time [optional].
+     * @throws Exception
      * @link https://github.com/Laky-64/JDB
      */
     function __construct(string $MEM_CACHE_IP = '127.0.0.1', string $MEM_CACHE_PORT = '1211', int $TIMEOUT = 4){
         $this->INSTANCE_RAM = new CustomMemcache();
         $this->TIMEOUT = $TIMEOUT;
         if(!@$this->INSTANCE_RAM -> connect($MEM_CACHE_IP,$MEM_CACHE_PORT)){
-            die('Error when connecting to memcached server!');
+            throw new Exception('Error when connecting to memcached server!');
         }
     }
 
@@ -295,6 +295,15 @@ class JDBI {
     }
 
     //TODO TABLE
+
+    /**
+     * @param string $table_name
+     * @param array $columns
+     * @param string $primary_key
+     * @param bool $auto_increment
+     * @return bool
+     * @throws Exception
+     */
     protected function make_table(string $table_name, array $columns, string $primary_key, bool $auto_increment):bool{
         if($this->IS_CONNECTED){
             $OPERATION_EXECUTE = [
@@ -314,10 +323,15 @@ class JDBI {
             ];
             return $this->send_req_with_response(json_encode($OPERATION_EXECUTE, true)) == 'true';
         }else{
-            die('Connect before execute query');
+            throw new Exception('Connect before execute query');
         }
     }
 
+    /**
+     * @param string $name
+     * @return bool
+     * @throws Exception
+     */
     protected function drop_table(string $name):bool{
         if($this->IS_CONNECTED){
             $OPERATION_EXECUTE = [
@@ -334,11 +348,18 @@ class JDBI {
             ];
             return $this->send_req_with_response(json_encode($OPERATION_EXECUTE, true)) == 'true';
         }else{
-            die('Connect before execute query');
+            throw new Exception('Connect before execute query');
         }
     }
 
     //TODO COLUMN
+
+    /**
+     * @param string $table
+     * @param array $vars
+     * @return bool
+     * @throws Exception
+     */
     protected function add_column(string $table, array $vars):bool{
         if($this->IS_CONNECTED){
             $OPERATION_EXECUTE = [
@@ -356,10 +377,16 @@ class JDBI {
             ];
             return $this->send_req_with_response(json_encode($OPERATION_EXECUTE, true)) == 'true';
         }else{
-            die('Connect before execute query');
+            throw new Exception('Connect before execute query');
         }
     }
 
+    /**
+     * @param string $table
+     * @param array $vars
+     * @return bool
+     * @throws Exception
+     */
     protected function drop_column(string $table, array $vars):bool{
         if($this->IS_CONNECTED){
             $OPERATION_EXECUTE = [
@@ -377,11 +404,18 @@ class JDBI {
             ];
             return $this->send_req_with_response(json_encode($OPERATION_EXECUTE, true)) == 'true';
         }else{
-            die('Connect before execute query');
+            throw new Exception('Connect before execute query');
         }
     }
 
     //TODO ROW
+
+    /**
+     * @param string $table
+     * @param array $row_values
+     * @return bool
+     * @throws Exception
+     */
     protected function make_row(string $table, array $row_values):bool{
         if($this->IS_CONNECTED){
             $OPERATION_EXECUTE = [
@@ -399,9 +433,17 @@ class JDBI {
             ];
             return $this->send_req_with_response(json_encode($OPERATION_EXECUTE, true)) == 'true';
         }else{
-            die('Connect before execute query');
+            throw new Exception('Connect before execute query');
         }
     }
+
+    /**
+     * @param string $table
+     * @param string $column_by
+     * @param string $row_by
+     * @return bool
+     * @throws Exception
+     */
     protected function drop_row(string $table, string $column_by, string $row_by):bool{
         if($this->IS_CONNECTED){
             $OPERATION_EXECUTE = [
@@ -420,9 +462,18 @@ class JDBI {
             ];
             return $this->send_req_with_response(json_encode($OPERATION_EXECUTE, true)) == 'true';
         }else{
-            die('Connect before execute query');
+            throw new Exception('Connect before execute query');
         }
     }
+
+    /**
+     * @param string $table
+     * @param array $row_values
+     * @param string $column_by
+     * @param string $row_by
+     * @return bool
+     * @throws Exception
+     */
     protected function set_row(string $table, array $row_values, string $column_by, string $row_by):bool{
         if($this->IS_CONNECTED){
             $OPERATION_EXECUTE = [
@@ -442,9 +493,17 @@ class JDBI {
             ];
             return $this->send_req_with_response(json_encode($OPERATION_EXECUTE, true)) == 'true';
         }else{
-            die('Connect before execute query');
+            throw new Exception('Connect before execute query');
         }
     }
+
+    /**
+     * @param string $table
+     * @param string $column_by
+     * @param string $row_by
+     * @return mixed|null
+     * @throws Exception
+     */
     protected function get_row(string $table, string $column_by, string $row_by){
         if($this->IS_CONNECTED){
             $OPERATION_EXECUTE = [
@@ -465,9 +524,15 @@ class JDBI {
             $result = $result == 'null' ? null:json_decode($result,true);
             return $result;
         }else{
-            die('Connect before execute query');
+            throw new Exception('Connect before execute query');
         }
     }
+
+    /**
+     * @param string $table
+     * @return mixed|null
+     * @throws Exception
+     */
     protected function get_table(string $table){
         if($this->IS_CONNECTED){
             $OPERATION_EXECUTE = [
@@ -485,9 +550,14 @@ class JDBI {
             $result = $result == 'null' ? null:json_decode($result,true);
             return $result;
         }else{
-            die('Connect before execute query');
+            throw new Exception('Connect before execute query');
         }
     }
+
+    /**
+     * @return mixed|null
+     * @throws Exception
+     */
     protected function get_database(){
         if($this->IS_CONNECTED){
             $OPERATION_EXECUTE = [
@@ -504,13 +574,14 @@ class JDBI {
             $result = $result == 'null' ? null:json_decode($result,true);
             return $result;
         }else{
-            die('Connect before execute query');
+            throw new Exception('Connect before execute query');
         }
     }
 
     /**
      * @param string $OPERATION_EXECUTE Operation to execute.
      * @return string Return result of JDB Core.
+     * @throws Exception
      */
     protected function send_req_with_response(string $OPERATION_EXECUTE):string{
         $curr_id = $this -> generateRandomString(64);
@@ -518,7 +589,7 @@ class JDBI {
         $start_time = time();
         while($this->INSTANCE_RAM -> get('JDB_RESULT_' . $curr_id) == ''){
             if((time() - $start_time) > $this->TIMEOUT){
-                die('Error when connecting to JDBI CORE: ERROR_CONN');
+                throw new Exception('Error when connecting to JDBI CORE: ERROR_CONN');
             }else{
                 usleep(5000);
             }

@@ -1,5 +1,8 @@
 /.idea/
 /vendor/
 /composer.lock
+/TEST
 /test.php
 /test_request.php
+/composer.phar
+/test.py
