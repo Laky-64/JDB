@@ -1,4 +1,4 @@
-# JDB(v. 3.0-beta)
+# JDB(v. 3.1-beta)
 A very fast database based on json text plain with encryptation
 
 `JDB 2.3-stable it's still available but deprecated`
@@ -53,7 +53,7 @@ header('Content-Type: text/plain'); //For make readable JDBC Core results
 ini_set('memory_limit', '2048M'); //For avoid a memory overload
 use laky64\database\JDB_CORE;
 include 'vendor/autoload.php';
-new JDB_CORE(THREAD_INSTANCE(JDB_CORE::NUM_THREAD), DATABASE_FOLDER(String), IP_MEMCACHED_SERVER(String), PORT_MEMCACHED_SERVER(String));
+new JDB_CORE(JDB_CORE::NUM_THREAD, 'database_folder', 'ip_memcached_server', 'port_memcached_server');
 ```
 
 ### JDBI Client (PHP)
