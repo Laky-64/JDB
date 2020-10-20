@@ -586,14 +586,14 @@ class JDBI {
     protected function send_req_with_response(string $OPERATION_EXECUTE):string{
         $curr_id = $this -> generateRandomString(64);
         $this->INSTANCE_RAM -> add('JDB_REQ_' . $curr_id, $OPERATION_EXECUTE);
+        //$start = microtime(true);
         $start_time = time();
         while($this->INSTANCE_RAM -> get('JDB_RESULT_' . $curr_id) == ''){
             if((time() - $start_time) > $this->TIMEOUT){
                 throw new Exception('Error when connecting to JDBI CORE: ERROR_CONN');
-            }else{
-                usleep(5000);
             }
         }
+        //echo (int)((microtime(true) - $start) * 1000) . 'ms ADD' .PHP_EOL;
         $DATA_RES = $this->INSTANCE_RAM -> get('JDB_RESULT_' . $curr_id);
         $this->INSTANCE_RAM -> delete('JDB_RESULT_' . $curr_id);
         return $DATA_RES;

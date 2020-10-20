@@ -14,7 +14,7 @@ class CustomMemcache {
         return $this->INSTANCE->close();
     }
     public function add($key, $var){
-        $RESULT = $this->INSTANCE->set($key, $var);
+        $RESULT = @$this->INSTANCE->set($key, $var);
         if($RESULT){
             $LIST_KEYS = json_decode($this->INSTANCE->get('MEMCACHE_KEYS'),true);
             $LIST_KEYS[$key] = true;
@@ -30,15 +30,18 @@ class CustomMemcache {
         return $RESULT;
     }
     public function getAllKeys(){
-        $return_d = json_decode($this->INSTANCE->get('MEMCACHE_KEYS'),true);
-        $return_d = $return_d == null ? []:$return_d;
         $return_tmp = [];
-        foreach ($return_d as $key=>$item){
-            $return_tmp[] = $key;
+        $result = @$this->INSTANCE->get('MEMCACHE_KEYS');
+        if($result != null){
+            $return_d = json_decode($result,true);
+            $return_d = $return_d == null ? []:$return_d;
+            foreach ($return_d as $key=>$item){
+                $return_tmp[] = $key;
+            }
         }
         return $return_tmp;
     }
     public function get($key){
-        return $this->INSTANCE->get($key);
+        return @$this->INSTANCE->get($key);
     }
 }

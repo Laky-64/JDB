@@ -1,8 +1,13 @@
 <?php
 namespace laky64\database;
 use Amp\Loop;
+
 class JDB_CORE
 {
+    /**
+     * 1 I/O Thread, 1 Controller Unit and 1 Operation Thread (Very fast and optimized for high level of multiple connections but not async)
+     */
+    public static int $ONE_THREAD = 1;
     /**
      * 1 I/O Thread, 1 Controller Unit and 2 Operation Thread (Very fast but not optimized for multiple connections)
      */
@@ -26,13 +31,14 @@ class JDB_CORE
     protected string $DATABASE_FOLDER = '';
     protected int $OPERATION_THREADS = 0;
     protected int $NUM_ACTIVE_OPERATION_THREAD = 0;
+    protected int $TICK = 0;
     protected array $DATA_INPUT_ARRAY_OPERATION = [];
     protected array $DB_GLOBAL = [];
     protected array $STATE_CORE = [
-        'OPERATION_THREADS' => [],
-        'CONTROLLER_UNIT' => 0
+        'OPERATION_THREADS' => []
     ];
     protected CustomMemcache $INSTANCE_RAM;
+
     function __construct(int $NUM_THREAD, string $PATH_FOLDER, string $MEM_CACHE_IP = '127.0.0.1', string $MEM_CACHE_PORT = '1211'){
         echo 'Detecting environment...' . PHP_EOL;
         if($PATH_FOLDER[0] == '/'){
@@ -77,36 +83,75 @@ class JDB_CORE
             }
             echo 'Imported succefully database from disk!' . PHP_EOL;
             echo 'Starting running ' . $this->OPERATION_THREADS . ' threads...' . PHP_EOL;
-            Loop::run(function() {
-                Loop::repeat(1,function (){
-                    if($this->NUM_ACTIVE_OPERATION_THREAD < $this->OPERATION_THREADS){
-                        $this->NUM_ACTIVE_OPERATION_THREAD++;
-                        $num_thread = $this->NUM_ACTIVE_OPERATION_THREAD;
-                        Loop::delay(1000, function () use ($num_thread){
-                            $this->join_operation_thread($num_thread);
-                        });
-
-                    }
+            if($NUM_THREAD == self::$ONE_THREAD){
+                $this->NUM_ACTIVE_OPERATION_THREAD++;
+                Loop::run(function () {
+                    $this->NUM_ACTIVE_OPERATION_THREAD++;
+                    Loop::repeat(10,function (){
+                        if($this->TICK >= 500){
+                            $this->TICK = 0;
+                            $this->execute_io();
+                        }
+                        $this->execute_control_unit();
+                        $this->execute_operation(1);
+                        $this->TICK += 10;
+                    });
                 });
-                $this->join_io_thread();
-                $this->join_control_unit_thread();
-            });
-
+            }else{
+                Loop::run(function() {
+                    Loop::repeat(1,function (){
+                        if($this->NUM_ACTIVE_OPERATION_THREAD < $this->OPERATION_THREADS){
+                            $this->NUM_ACTIVE_OPERATION_THREAD++;
+                            $num_thread = $this->NUM_ACTIVE_OPERATION_THREAD;
+                            $this->join_operation_thread($num_thread);
+                        }
+                    });
+                    $this->join_io_thread();
+                    $this->join_control_unit_thread();
+                });
+            }
         }else{
             die('The path not exist or is file');
         }
     }
 
+    //JDBI I/O THREAD
+    protected function join_io_thread(){
+        Loop::repeat($msInterval =  500, function (){
+            $this->execute_io();
+            usleep(10000);
+        });
+    }
+
+    protected function execute_io() {
+        if(!isset($this->STATE_CORE['IO_THREAD'])){
+            echo 'Started I/O Thread' . PHP_EOL;
+        }
+        $this->STATE_CORE['IO_THREAD'] = [
+            'state' => 'RUNNING(' . time() . ')'
+        ];
+        foreach ($this->DB_GLOBAL as $DB_NAME => $DB_CONTENT){
+            $DATA = $DB_CONTENT;
+            if($DB_NAME[0] != '.'){
+                $DATA = $this -> encrypt(json_encode($DB_CONTENT, true), $this->DB_GLOBAL['.'.$DB_NAME]);
+            }
+            file_put_contents($this->DATABASE_FOLDER . $this->ENVIRONMENT_SEPARATOR . $DB_NAME . '.jdb', $DATA);
+        }
+    }
+    //END I/O THREAD
 
     //JDBI CONTROL UNIT THREADS
     protected function join_control_unit_thread(){
-        echo 'Started Control Unit Thread' . PHP_EOL;
         Loop::repeat($msInterval = 10, function (){
             $this->execute_control_unit();
             usleep(10000);
         });
     }
+
     protected function execute_control_unit() {
+        if(!isset($this->STATE_CORE['CONTROLLER_UNIT'])){
+            echo 'Started Control Unit Thread' . PHP_EOL;
+        }
         $this->STATE_CORE['CONTROLLER_UNIT'] = [
             'state' => 'RUNNING(' . time() . ')'
         ];
@@ -135,35 +180,20 @@ class JDB_CORE
     }
     //END JDBI CONTROL UNIT THREAD
 
-    //JDBI CORE
-    protected function join_io_thread(){
-        echo 'Started I/O Thread' . PHP_EOL;
-        Loop::repeat($msInterval =  500, function (){
-            $this->execute_io();
-            usleep(10000);
-        });
-    }
-    protected function execute_io() {
-        $this->STATE_CORE['IO_THREAD'] = [
-            'state' => 'RUNNING(' . time() . ')'
-        ];
-        foreach ($this->DB_GLOBAL as $DB_NAME => $DB_CONTENT){
-            $DATA = $DB_CONTENT;
-            if($DB_NAME[0] != '.'){
-                $DATA = $this -> encrypt(json_encode($DB_CONTENT, true), $this->DB_GLOBAL['.'.$DB_NAME]);
-            }
-            file_put_contents($this->DATABASE_FOLDER . $this->ENVIRONMENT_SEPARATOR . $DB_NAME . '.jdb', $DATA);
-        }
-    }
+    //OPERATION THREAD
     protected function join_operation_thread($num_thread){
-        echo 'Started Operation Thread n.' . $num_thread . PHP_EOL;
         $this->DATA_INPUT_ARRAY_OPERATION[$num_thread] = [];
         Loop::repeat($msInterval = 10, function () use ($num_thread){
             $this->execute_operation($num_thread);
             usleep(10000);
         });
     }
+
     protected function execute_operation($ID_THREAD) {
+        if(!isset($this->STATE_CORE['OPERATION_THREADS'][$ID_THREAD])){
+            echo 'Started Operation Thread n.' . $ID_THREAD . PHP_EOL;
+            $this->DATA_INPUT_ARRAY_OPERATION[$ID_THREAD] = [];
+        }
         $this->STATE_CORE['OPERATION_THREADS'][$ID_THREAD] = [
             'lastupdate' => time(),
             'pending' => count($this->DATA_INPUT_ARRAY_OPERATION[$ID_THREAD])
@@ -554,7 +584,7 @@ class JDB_CORE
         }
         unset($this->DATA_INPUT_ARRAY_OPERATION[$ID_THREAD][$id_operation]);
     }
-    //END JDBI CORE
+    //END OPERATION THREAD
 
     //OPENSSL CRYPTATION
     protected function encrypt($pure_string, $encryption_key) {

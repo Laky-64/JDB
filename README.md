@@ -1,13 +1,57 @@
-# JDB(v. 3.1-beta)
-A very fast database based on json text plain with encryptation
+# JDB(v. 3.3-stable)
+JDB is very fast parallel database based on json text plain with encryptation
 
 `JDB 2.3-stable it's still available but deprecated`
 
-### Now Available in Async Multi-Thread and Windows Environment!
+_Library maked by [Laky64](https://t.me/Laky64)_
+
+## JDB Bechmark
+| | PHP | Python | Mode | Thread Mode |
+| --- | --- | --- | --- | --- |
+| **One Thread** | 15ms | 37ms | Sequential | Single Thread |
+| **Two Thread** | 47ms | 85ms | Async | Multi Thread |
+| **Four Thread** | 79ms | 149ms | Async | Multi Thread |
+| **Eight Thread** | 143ms | 133ms | Async | Multi Thread |
+| **Twelve Thread** | 207ms | 402ms | Async | Multi Thread |
+
+## JDB Structure
+Below is how the JDB database is structured
+
+##### JDB Core Structure
+| DATABASE | PASSWORD |
+| --- | --- |
+| database1 | password1 |
+| database2 | password2 |
+| database3 | password3 |
+
+##### Database Structure
+| TABLE | PRIMARY KEY | PRIMARY KEY TYPE |
+| --- | --- | --- |
+| table1 | primary_key1 | primary_key_type1 |
+| table2 | primary_key2 | primary_key_type2 |
+| table3 | primary_key3 | primary_key_type3 |
+
+##### Table Structure
+|  | COLUMN1 | COLUMN2 | COLUMN3 |
+| --- | --- | --- | --- |
+| **ROW1** | value1 | value2 | value3 |
+| **ROW2** | value1 | value2 | value3 |
+| **ROW3** | value1 | value2 | value3 |
+
+## JDB Core Threads
+In the JDB core there are different types of threads each with different jobs, here it is:
+
+- **Controller Unit Thread**
+It divides the workload on the various Operation Threads according to the freest one
+- **I/O Thread**
+It performs backups to disk every 500ms from RAM Database
+- **Operation Thread**
+It performs computation or query operations, usually more than one of these threads are started
+
+## Getting Started
+### Now Available in Async Multi-Thread, supported Windows Environment and Python Client!
 
 First create the database folder, then create in the database folder with the name of the table to which you want to attribute, in which you want to insert the fields
-
-_Library maked by [Laky64](https://t.me/Laky64)_
 
 ## Installation with composer
 With **json file** (`Composer`):
@@ -23,10 +67,10 @@ With **command line** (`Composer`):
 
 **-** `composer require laky64/jdb`
 
-## Documentation
+## Warning!
 Read this **documentation** carefully so as not to cause malfunctions with **JDB**
 
-### JDB CORE
+## JDB CORE
 
 #### Requirements:
 - **PHP > 7.4**
@@ -56,247 +100,14 @@ include 'vendor/autoload.php';
 new JDB_CORE(JDB_CORE::NUM_THREAD, 'database_folder', 'ip_memcached_server', 'port_memcached_server');
 ```
 
-### JDBI Client (PHP)
-Front-end to take request to JDB Core
+## Available Clients
+- [**PHP Client**](https://github.com/Laky-64/JDB/blob/master/PHP-README.md)
+- [**Python Client**](https://github.com/Laky-64/JDB/blob/master/PYTHON-README.md)
 
-#### Requirements:
-- **PHP > 7.4**
-- **PHP Memcache**
-- **JDB Core Running**
-- **Memcached Server Running**
+## Contributing
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-#### Introduction
-For first initialize the **JDB Sock Connection** to **Memcached Server**
-``` php
-use laky64\database\JDBI;
-include 'vendor/autoload.php';
-$JDBI = new JDBI('ip_memcached_server', 'port_memcached_server'); //Start Connection
-...
-$JDBI -> close(); //Close connection
-```
-#### Show Processlist
-Show processlist, return array on success and null on failure
-``` php
-...
-$JDBI->query('SHOW PROCESSLIST;');
-...
-```
-#### Make Database
-For make database, return true on success and false on failure
-``` php
-...
-$JDBI->query('CREATE DATABASE `database_name` PASSWORD `database_password`;');
-...
-```
-#### Drop Database
-For drop database, return true on success and false on failure
-``` php
-...
-$JDBI->query('DROP DATABASE `database_name`;');
-...
-```
-#### Connect to Database
-For connect to database, return true on success and false on failure
-``` php
-...
-$JDBI -> connect('database_name','database_password');
-...
-```
-#### Make Table
-For make table **(Need connection to database)**, return true on success and false on failure
-##### With Auto-Increment primary key
-``` php
-...
-$JDBI->query('CREATE TABLE `table_name` (`column1`, `column2`, `column3`) AS PRIMARY `column1` TYPE `AUTO_INCREMENT`;');
-...
-```
-##### With Defined primary key
-``` php
-...
-$JDBI->query('CREATE TABLE `table_name` (`column1`, `column2`, `column3`) AS PRIMARY `column1` TYPE `DEFINED`;');
-...
-```
-#### Drop Table
-For drop table **(Need connection to database)**, return true on success and false on failure
-``` php
-...
-$JDBI->query('DROP TABLE `table_name`;');
-...
-```
-#### Show all Table
-Show all tables **(Need connection to database)**, return array on success and null on failure
-``` php
-...
-$JDBI->query('SHOW TABLES;');
-...
-```
-#### Dump Table
-Dump Row **(Need connection to database)**, return array on success and null on failure
-``` php
-...
-$JDBI->query('SELECT * FROM `table_name`;');
-...
-```
-#### Add Column
-Add Column **(Need connection to database)**, return true on success and false on failure
-``` php
-...
-$JDBI->query('ALTER TABLE `table_name` ADD COLUMN (`column1`, `column2`);');
-...
-```
-#### Drop Column
-Add Column **(Need connection to database)**, return true on success and false on failure
-``` php
-...
-$JDBI->query('ALTER TABLE `table_name` DROP COLUMN (`column1`, `column2`);');
-...
-```
-#### Insert Row
-Insert Row **(Need connection to database)**, return true on success and false on failure
-``` php
-...
-$JDBI->query('INSERT INTO `table_name` (`column1`, `column2`, `column3`) VALUES (`value1`, `value2`, `value3`);');
-...
-```
-#### Update Row
-Insert Row **(Need connection to database)**, return true on success and false on failure
-``` php
-...
-$JDBI->query('UPDATE `table_name` SET (`column1`, `column2`) VALUES (`value1`, `value2`) WHERE `column` IS `value`;');
-...
-```
-#### Delete Row
-Delete Row **(Need connection to database)**, return true on success and false on failure
-``` php
-...
-$JDBI->query('DELETE FROM `table_name` WHERE `column` IS `value`;');
-...
-```
-#### Dump Row
-Dump Row **(Need connection to database)**, return array on success and null on failure
-``` php
-...
-$JDBI->query('SELECT * FROM `table_name` WHERE `column` IS `value`;');
-...
-```
-### JDBI Client (Python)
-Front-end to take request to JDB Core
+Please make sure to update tests as appropriate.
 
-#### Requirements:
-- **PHP > 7.4**
-- **PHP Memcache**
-- **Python > 3.9**
-- **JDB Core Running**
-- **Memcached Server Running**
-
-#### Introduction
-For first initialize the **JDB Sock Connection** to **Memcached Server**
-``` python
-from vendor.laky64.jdb.src.JDBI import JDBI
-JDBI_CLASS = JDBI('ip_memcached_server', 'port_memcached_server')
-```
-#### Show Processlist
-Show processlist, return array on success and None on failure
-``` python
-...
-JDBI_CLASS.query('SHOW PROCESSLIST;')
-...
-```
-#### Make Database
-For make database, return true on success and false on failure
-``` python
-...
-JDBI_CLASS.query('CREATE DATABASE `database_name` PASSWORD `database_password`;')
-...
-```
-#### Drop Database
-For drop database, return true on success and false on failure
-``` python
-...
-JDBI_CLASS.query('DROP DATABASE `database_name`;')
-...
-```
-#### Connect to Database
-For connect to database, return true on success and false on failure
-``` python
-...
-JDBI_CLASS.connect('database_name','database_password')
-...
-```
-#### Make Table
-For make table **(Need connection to database)**, return true on success and false on failure
-##### With Auto-Increment primary key
-``` python
-...
-JDBI_CLASS.query('CREATE TABLE `table_name` (`column1`, `column2`, `column3`) AS PRIMARY `column1` TYPE `AUTO_INCREMENT`;')
-...
-```
-##### With Defined primary key
-``` python
-...
-JDBI_CLASS.query('CREATE TABLE `table_name` (`column1`, `column2`, `column3`) AS PRIMARY `column1` TYPE `DEFINED`;')
-...
-```
-#### Drop Table
-For drop table **(Need connection to database)**, return true on success and false on failure
-``` python
-...
-JDBI_CLASS.query('DROP TABLE `table_name`;')
-...
-```
-#### Show all Table
-Show all tables **(Need connection to database)**, return array on success and None on failure
-``` python
-...
-JDBI_CLASS.query('SHOW TABLES;')
-...
-```
-#### Dump Table
-Dump Row **(Need connection to database)**, return array on success and None on failure
-``` python
-...
-JDBI_CLASS.query('SELECT * FROM `table_name`;')
-...
-```
-#### Add Column
-Add Column **(Need connection to database)**, return true on success and false on failure
-``` python
-...
-JDBI_CLASS.query('ALTER TABLE `table_name` ADD COLUMN (`column1`, `column2`);')
-...
-```
-#### Drop Column
-Add Column **(Need connection to database)**, return true on success and false on failure
-``` python
-...
-JDBI_CLASS.query('ALTER TABLE `table_name` DROP COLUMN (`column1`, `column2`);')
-...
-```
-#### Insert Row
-Insert Row **(Need connection to database)**, return true on success and false on failure
-``` python
-...
-JDBI_CLASS.query('INSERT INTO `table_name` (`column1`, `column2`, `column3`) VALUES (`value1`, `value2`, `value3`);')
-...
-```
-#### Update Row
-Insert Row **(Need connection to database)**, return true on success and false on failure
-``` python
-...
-$JDBI->query('UPDATE `table_name` SET (`column1`, `column2`) VALUES (`value1`, `value2`) WHERE `column` IS `value`;');
-...
-```
-#### Delete Row
-Delete Row **(Need connection to database)**, return true on success and false on failure
-``` python
-...
-JDBI_CLASS.query('DELETE FROM `table_name` WHERE `column` IS `value`;')
-...
-```
-#### Dump Row
-Dump Row **(Need connection to database)**, return array on success and None on failure
-``` python
-...
-JDBI_CLASS.query('SELECT * FROM `table_name` WHERE `column` IS `value`;')
-...
-```
+## License
+[MIT](https://choosealicense.com/licenses/mit/)

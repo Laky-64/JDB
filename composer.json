@@ -19,6 +19,8 @@
         "ext-json": "*",
         "ext-openssl": "*",
         "amphp/amp": "^2.5",
+        "amphp/parallel-functions": "^v1.0.0",
+        "amphp/parallel": "^v1.4.0",
         "ext-memcache": "*"
     },
     "type": "project"
