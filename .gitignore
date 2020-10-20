@@ -6,3 +6,5 @@
 /test_request.php
 /composer.phar
 /test.py
+/__pycache__
+/src/__pycache__
